@@ -1,11 +1,15 @@
+
+# Terraform configuration block: declares the Terraform version constraint used to parse and apply this module.
 terraform {
   required_version = ">= 0.12"
 }
 
+# Provider block: configures the AWS provider and tells Terraform which AWS region to use.
 provider "aws" {
   region = var.aws_region
 }
 
+# Variable blocks: define input values that can be passed from tfvars or the command line.
 variable "aws_region" {
     type = string
 }
@@ -18,6 +22,7 @@ variable "key_name" {
     type = string
 }
 
+# Security group resource: creates the network firewall rules for Jenkins and SSH access.
 resource "aws_security_group" "jenkins_sg" {
   name        = "jenkins_sg"
   description = "Allow Jenkins Traffic"
@@ -52,6 +57,7 @@ resource "aws_security_group" "jenkins_sg" {
   }
 }
 
+# AMI data source: looks up the most recent Amazon Linux 2023 image for the EC2 instance.
 data "aws_ami" "amazon_linux" {
   most_recent = true
 
@@ -73,6 +79,7 @@ data "aws_ami" "amazon_linux" {
   owners = ["amazon"] # Canonical
 }
 
+# IAM role resource: creates an EC2-assumable role used by the Jenkins instance.
 resource "aws_iam_role" "test_role" {
   name = "test_role"
 
@@ -93,11 +100,13 @@ resource "aws_iam_role" "test_role" {
 EOF
 }
 
+# Instance profile resource: attaches the IAM role to the EC2 instance.
 resource "aws_iam_instance_profile" "test_profile" {
   name = "test_profile"
   role = "${aws_iam_role.test_role.name}"
 }
 
+# IAM role policy resource: grants permissions to the EC2 role.
 resource "aws_iam_role_policy" "test_policy" {
   name = "test_policy"
   role = "${aws_iam_role.test_role.id}"
@@ -116,6 +125,7 @@ resource "aws_iam_role_policy" "test_policy" {
 EOF
 }
 
+# EC2 instance resource: launches the Jenkins server and runs the bootstrap script through user data.
 resource "aws_instance" "web" {
   ami             = data.aws_ami.amazon_linux.id
   instance_type   = "t2.xlarge" 
